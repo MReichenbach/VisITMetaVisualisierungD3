@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<!--
+ | D3 example showing a force-directed graph layout.
+ | Volker Ahlers, Hochschule Hannover, 2012.
+ |
+ | Code based on chapter 5 of
+ |   Dewar, M.: Getting Started with D3. O'Reilly, Sebastopol, CA, 2012.
+ | Data source (book resource):
+ |   http://examples.oreilly.com/0636920025429/
+ |
+ | Extendet for:
+ | IF-Map-Graph visualisation with D3 for the dataservice @Trust@HSH
+ | Lecture project in 'Visualisierung und HCI' at WS14/15
+  -->
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <title>D3 Network</title>
+    <script type="text/javascript" src="d3.min.js"></script>
+    <style type="text/css">
+        .nodeshape {
+            stroke: black;
+            stroke-width: 1px;
+            fill: #ffaaaa;
+        }
+
+        .nodetext {
+            font: 12px sans-serif;
+        }
+
+        .link {
+            stroke: #777777;
+            stroke-width: 2px;
+        }
+    </style>
+</head>
+<body>
+<script type="text/javascript">
+
+    // load data from JSON file and call anonymous function
+    var filename = "data/metadata_viel.json";
+//    var filename = "data/metadata.json";
+
+
+    var graph = {};
+
+    var url = "http://127.0.0.1:8000/default/graph/current";
+
+
+    var box = confirm("FRAGE:\n\n" +
+    "IF-MAP Graphen vom Dataservice laden?\n" +
+    "(ACHTUNG es wird ein request an '" + url + "' gesendet)\n\n" +
+    "Abbrechen lädt die Datei '" + filename + "'");
+
+    if (box == true) {
+        httpGet();
+    } else {
+        jsonFile();
+    }
+
+    function jsonFile(){
+        d3.json(filename, function (data) {
+            graph.data = data;
+            buildGraphData();
+            drawGraph();
+        });
+    }
+
+    function httpGet() {
+
+        var client = new XMLHttpRequest();
+
+        client.onloadend = function() {
+            if(this.status == 200) {
+                // success!
+                graph.data = JSON.parse(this.response);
+                buildGraphData();
+                drawGraph();
+            } else {
+                window.alert('ERROR: Der Response vom dataservice ist falsch! \n\n' +
+                'Na? Vergessen den dataservice zu starten?')
+            }
+        }
+
+        client.open("GET", url);
+
+        client.send();
+    }
+
+    // Bereitet die im JSONString codierten Daten für das Anzeigen des Graphens auf.
+    // Dabei ist es egal ob der JSONString von einer Datei eingelesen wurde oder über die REST-Schnittstelle vom dataservice bezogen wurde.
+    //
+    // Kurze Funktionsbeschreibung:
+    // ----------------------------
+    //
+    // Es wird über sämtliche 'links' iteriert. Dabei wird geprüft ob ein Identifier schon bekannt ist,
+    // wenn ja wird er nicht als zusätzlicher Node hinzugefügt.
+    //
+    // Metadaten werden immer hinzugefügt, zusätzlich werden dabei auch die Links zwischen Metadaten und Identifier erstellt.
+    // Sollte in einem 'links'-Objekt mehrere Metadaten vorhanden sein, so sind diese in einem zusätzlichen Array gepackt.
+    // Diese Metadaten sind somit auf "gleicher Ebene", hängen also entweder am gleichen Identifier oder zwischen den gleichen.
+    // Um eine bessere Darstellung zu erzielen, sodass Metadaten auf gleicher Ebene nicht mehr übereinander liegend dargestellt werden,
+    // werden auch diese miteinander "unsichtbar" verlinkt.
+    // Mit Unsichtbar ist gemeint, für D3 ist es ein ganz normaler Node-Link, allerdings wird dieser nicht dargestellt.
+    //
+    // Jeder Knoten erhält zusätzlich noch die Information welches sein Nachbar-/Kind-Knoten ist, um diese beim mouseover nicht auszublenden.
+    function buildGraphData() {
+        graph.nodeValuesAll = [];
+        graph.links = [];
+        for (var dataArrayKey in graph.data) {
+            var dataObj = graph.data[dataArrayKey];
+
+            for (var linksArrayKey in dataObj.links) {
+                var identifierKeys = []; // indexes der Identifier, wo im nodeValuesAll sie sind
+                var linkObj = dataObj.links[linksArrayKey];
+
+                // ##################
+                // ### Identifier ###
+                // ##################
+                var identifiers = linkObj.identifiers;
+                if(identifiers.constructor.name == "Array") {
+                    // Wenn es mehrere Identifier unter "links" gibt
+                    for (var identifierArrayKey in identifiers) {
+                        var identifier = identifiers[identifierArrayKey];
+                        var identifierIndex = searchIdentifier(identifier);
+                        if (identifierIndex == -1) {
+                            // Wenn nicht gefunden, hinzufügen
+                            identifierIndex = addIdentifier(identifier);
+                        }
+                        // Index vom Identifier merken
+                        identifierKeys.push(identifierIndex)
+                    }
+                } else if(identifiers.constructor.name == "Object") {
+                    // Wenn es nur ein Identifier unter "links" gibt
+                    var identifier = identifiers;
+                    var identifierIndex = searchIdentifier(identifier);
+                    if (identifierIndex == -1) {
+                        // Wenn nicht gefunden hinzufügen
+                        identifierIndex = addIdentifier(identifier);
+                    }
+                    // Index vom Identifier merken
+                    identifierKeys.push(identifierIndex)
+                }
+
+                // ########################
+                // ### Metadata & Links ###
+                // ########################
+                var metadata = linkObj.metadata;
+                if(metadata.constructor.name == "Array") {
+                    // Wenn es mehrere metadata unter "metadata" gibt
+                    var metadataIndexKeys = []; // indexes der Metadaten, wo im nodeValuesAll sie sind
+                    for (var metadataArrayKey in metadata) {
+                        var meta = metadata[metadataArrayKey];
+                        var metaIndex = addMetadata(meta);
+
+                        addLinksMetadataIdentifier(meta, metaIndex, identifierKeys);
+
+                        // Index vom Metadatum merken
+                        metadataIndexKeys.push(metaIndex)
+                    }
+
+                    // Metadaten auf gleicher Ebene auch miteinander "unsichtbar" verlinken
+                    var finishedMetadataIndexKeys = []; // ist ein Metadatum schon mit allen auf seiner ebene einmal verlinkt, müssen keine neuen Links zu desem entstehen
+                    for (var index1 in metadataIndexKeys) {
+                        for (var index2 in metadataIndexKeys) {
+                            if(index1 != index2 && !arrayContains(finishedMetadataIndexKeys, index2) ){
+                                addLink(metadataIndexKeys[index1], metadataIndexKeys[index2], "HIDDEN_LINK");
+                            }
+                        }
+                        finishedMetadataIndexKeys.push(index1);
+                    }
+
+                } else if(metadata.constructor.name == "Object") {
+                    // Wenn es nur ein metadata unter "metadata" gibt
+                    var meta = metadata;
+                    var metaIndex = addMetadata(meta);
+
+                    addLinksMetadataIdentifier(meta, metaIndex, identifierKeys);
+                }
+            }
+        }
+    }
+
+    function addLinksMetadataIdentifier(metadata, metadataIndex, identifierKeys){
+        for (var identifierIndex in identifierKeys) {
+            var link = addLink(identifierKeys[identifierIndex], metadataIndex, "VISIBLE_LINK");
+            metadata.links.push(link); // Link am Metadata Node anfügen
+            graph.nodeValuesAll[identifierKeys[identifierIndex]].links.push(link); // Link am Identiefier Node anfügen
+
+            metadata.childs.push(graph.nodeValuesAll[identifierKeys[identifierIndex]]); // Am Metadata den Identiefier anfügen
+            graph.nodeValuesAll[identifierKeys[identifierIndex]].childs.push(metadata); // Am Identiefier den Metadata  anfügen
+        }
+    }
+
+    function drawGraph() {
+
+        var width = 2000, height = 2000;
+
+        var svg = d3.select("body")
+                .append("center")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+        // create the layout
+        var force = d3.layout.force()
+                .charge(-225)
+                .linkDistance(200)
+                .size([width, height])
+                .nodes(graph.nodeValuesAll)
+                .links(graph.links)
+                .start();
+
+        // draw the graph edges
+        var link = svg.selectAll(".link")
+                .data(graph.links)
+                .enter()
+                .append("line")
+                .attr("class", "link");
+
+        // draw the graph nodes
+        var node = svg.selectAll(".node")
+                .data(graph.nodeValuesAll)
+                .enter()
+                .append("g")
+                .attr("class", function(d){
+                    return d.nodeType;
+                })
+                .call(force.drag);
+
+        // alle properties des Knotens werden mit in den title geschrieben
+        node.append("title")
+                .text(function (d) {
+                    var propertieTEXT = "";
+                    for (var nodeKey in d.properties) {
+                        propertieTEXT = propertieTEXT + nodeKey + ": " + d.properties[nodeKey] + "\n";
+                    }
+                    return propertieTEXT;
+                });
+
+        // #### mouseover & mouseout ####
+        node.on("mouseover", function(focusNoded) {
+            node.filter(function(d) {
+                if(d != focusNoded && !arrayContains(focusNoded.childs, d)){
+                    return d;
+                }
+            })
+            .style("opacity", 0.1);
+            link.filter(function(d) {
+                if(!arrayContains(focusNoded.links, d)){
+                    return d;
+                }
+            })
+            .style("opacity", 0.1);
+        });
+
+        node.on("mouseout", function(d) {
+            node.style("opacity", 1);
+            link.style("opacity", 1);
+        });
+
+        // #### Festlegen des Aussehens von Knoten, IDENTIFIER & METADATA ####
+        d3.selectAll(".IDENTIFIER")
+                .append("rect")
+                .attr("class", "nodeshape")
+                .attr("width", 110)
+                .attr("height", 20)
+                .style("fill", "#6CD8FF");
+
+        d3.selectAll(".METADATA")
+                .append("ellipse")
+                    .attr("class", "nodeshape")
+                    .attr("rx", 80)
+                    .attr("ry", 15)
+                    .style("fill", "#FFBE5D");
+
+        // #### Beschriftung aller Knoten festlegen ####
+        d3.selectAll(".METADATA")
+                .attr("class", "METADATA text")
+                .append("text")
+                .text(function (d) {
+                      return d.typename;
+                })
+                .attr("dx", -70)
+                .attr("dy", 4);
+
+        d3.selectAll(".IDENTIFIER")
+                .attr("class", "IDENTIFIER text")
+                .append("text")
+                .text(function (d) {
+                    return d.typename;
+                })
+                .attr("dx", 5)
+                .attr("dy", 14);
+
+        // define what to do one each tick of the animation
+        force.on("tick", function () {
+
+            // Nur Links vom typ 'VISIBLE_LINK' werden gezeichnet
+            link.attr("x1", function (d) {
+            if(d.linkType == "VISIBLE_LINK" ){
+                    return d.source.x;
+            }
+            })
+                    .attr("y1", function (d) {
+                        if(d.linkType == "VISIBLE_LINK" ) {
+                            return d.source.y;
+                        }
+                    })
+                    .attr("x2", function (d) {
+                        if(d.linkType == "VISIBLE_LINK" ) {
+                            return d.target.x;
+                        }
+                    })
+                    .attr("y2", function (d) {
+                        if(d.linkType == "VISIBLE_LINK" ) {
+                            return d.target.y;
+                        }
+                    });
+
+            node.attr("transform", function (d) {
+                return "translate(" + d.x + ", " + d.y + ")";
+            });
+        });
+    }
+
+    // Viele kleinere Hilfsfunktionen
+    function equalsProperties(nodeValueProperties, identifierProperties){
+        for (var nodeKey in nodeValueProperties) {
+            if (identifierProperties.hasOwnProperty(nodeKey)) {
+                if(nodeValueProperties[nodeKey] != identifierProperties[nodeKey]){
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function equalsIdentifier(nodeValue, identifier) {
+        if(nodeValue.typename != identifier.typename){
+            return false;
+        } else if (!equalsProperties(nodeValue.properties, identifier.properties)){
+            return false;
+        }
+        return true;
+    }
+
+    function isIdentifier(nodeValue){
+        if (nodeValue.nodeType != "IDENTIFIER") {
+            return false;
+        }
+        return true;
+    }
+
+    // returned the identifier index
+    function searchIdentifier(identifier) {
+        for (var nodeKey in graph.nodeValuesAll) {
+            var nodeValue = graph.nodeValuesAll[nodeKey];
+            if(isIdentifier(nodeValue)){
+                if (equalsIdentifier(nodeValue, identifier)) {
+                    return parseInt(nodeKey);
+                }
+            }
+        }
+        return -1;
+    }
+
+    // returned the identifier index
+    function addIdentifier(identifier){
+        identifier.nodeType = "IDENTIFIER";
+        identifier.links = [];
+        identifier.childs = [];
+        var newLength = graph.nodeValuesAll.push(identifier);
+        return newLength - 1;
+    }
+
+    function addMetadata(metadata){
+        metadata.nodeType = "METADATA";
+        metadata.links = [];
+        metadata.childs = [];
+        var newLength = graph.nodeValuesAll.push(metadata);
+        return newLength - 1;
+    }
+
+    function addLink(source, target, type) {
+        var newLink = { "source": source, "target": target, "linkType": type };
+        graph.links.push(newLink);
+        return newLink;
+    }
+
+    function arrayContains(array, value) {
+        for (var arrayIndex in array) {
+            if(array[arrayIndex] == value){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    ;
+</script>
+</body>
+</html>

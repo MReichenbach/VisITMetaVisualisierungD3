@@ -1,0 +1,33 @@
+[
+  {
+    "timestamp":1416499714000,
+    "links":[
+      {
+        "identifiers":[
+          {
+            "typename":"device",
+            "properties":{
+              "\/device\/name":"pdp"
+            }
+          },
+          {
+            "typename":"access-request",
+            "properties":{
+              "\/access-request[@name]":"AccessRequestors"
+            }
+          }
+        ],
+        "metadata":{
+          "typename":"access-request-device",
+          "properties":{
+            "\/meta:access-request-device[@ifmap-publisher-id]":"test-52e79bc3-788a-4fc7-a300-805175e174f9",
+            "\/meta:access-request-device[@ifmap-cardinality]":"singleValue",
+            "\/meta:access-request-device[@ifmap-timestamp-fraction]":"0.033",
+            "\/meta:access-request-device[@ifmap-timestamp]":"2014-11-20T17:08:34+01:00",
+            "\/meta:access-request-device[@xmlns:meta]":"http:\/\/www.trustedcomputinggroup.org\/2010\/IFMAP-METADATA\/2"
+          }
+        }
+      }
+    ]
+  }
+]
