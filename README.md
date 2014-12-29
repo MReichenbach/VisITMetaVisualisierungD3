@@ -1,6 +1,7 @@
 VisITMetaVisualisierungD3
 =========
 IF-MAP-Graphen Visualisierung, mit D3, des dataservice aus dem Projekt [VisITMeta][3].
+Inspiriert durch das [d3-process-map][4] Beispiel.
 
 Features
 ========
@@ -42,3 +43,4 @@ Getestet mit Firefox 33.1
 [1]: http://www.apache.org/licenses/LICENSE-2.0.html
 [2]: http://de.wikipedia.org/wiki/Cross-Origin_Resource_Sharing
 [3]: https://github.com/trustathsh/visitmeta
+[4]: https://github.com/nylen/d3-process-map
