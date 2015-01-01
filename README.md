@@ -1,38 +1,39 @@
 VisITMetaVisualisierungD3
 =========
-IF-MAP-Graphen Visualisierung, mit D3, des dataservice aus dem Projekt [VisITMeta][3].
-Inspiriert durch das [d3-process-map][4] Beispiel.
+IF-MAP-Graphen Visualisierung mit D3, dem Dataservice aus dem Projekt [VisITMeta][3].
+Inspiriert durch das [d3-process-map][4] - Beispiel.
 
 Features
 ========
-Ein IF-Map Graph kann statisch aus einer JSON-Datei erstellt werden. Dabei muss diese dem Format
-der REST-Schnitstelle vom dataservice, aus dem VisITMeta Projekt, entsprechen.
-Es ist aber auch möglich ein GET-Anfrage zur GraphResource des dataservice zu senden. Dabei ist aber die VisITMeta configuration zu beachten, siehe unten.
+Ein IF-MAP-Graph kann statisch aus einer JSON-Datei erstellt werden.
+Dabei muss diese dem Format der REST-Schnittstelle vom Dataservice, aus dem VisITMeta Projekt, entsprechen. 
+Ebenfalls ist aber auch das Senden einer GET-Anfrage zur GraphResource des Dataservice möglich.
 
+Dabei ist aber die VisITMeta-Configuration zu beachten (siehe unten).
 Identifier werden als 'rect' dargestellt und Metadaten als 'ellipse'.
-Sämtliche properties eines Identifiers oder Metadatums werden angezeigt sobald der Cursor über solch einem Knoten positioniert wird.
-Dabei wird auch der gesamte Graph ausgeblendet, bist auf dem Knoten über dem sich der Cursor befinde und dessen Kannten, sowie deren Knoten.
+Sämtliche Properties eines Identifiers oder Metadatums werden angezeigt sobald der Cursor über solch einem Knoten positioniert wird.
+Dabei wird auch der gesamte Graph ausgeblendet, bis auf dem Knoten über dem sich der Cursor befindet und dessen Kanten sowie deren Knoten.
 
-Configuration
+Konfiguration
 =============
-Beschreibung der nötigen Einstellungen, damit alles läuft.
+Beschreibung der nötigen Einstellungen zur erfolgreichen Ausführung.
 
-VisITMeta configuration(dataservice)
+VisITMeta configuration(Dataservice)
 -----------------------
 Die aktuelle implementierung der "GraphResource" vom dataservice erlaubt es nicht "Cross-Origin-Requests" (COR) zu senden.
 Dies ist nötig damit "VisITMetaVisualisierungD3" Requests absetzen kann, auch wenn sie nicht auf der selben Domäin läuft.
 Unter extension/GraphResource.java ist eine modifizierte Version zu finden wo dies durch [CORS][2] dennoch möglich ist.
 
-Running
+Ausführen
 =======
-1. Um einfach was zu sehen genügt es "visitmetaD3.html" zu starten und bei der Frage auf "Abbrechen" zu klicken.
-Daraufhin wird ein statischer Graph aus der Datei "data/metadata_viel.json" erstellt.
+1. Um eine einfache Visualisierung zu starten genügt es "visitmetaD3.html" im Browser zu öffnen und bei der Frage auf "Abbrechen"
+zu klicken. Daraufhin wird ein statischer Graph aus der Datei "data/metadata_viel.json" erstellt.
 
-2. Um den current Graph aus einem laufenden dataservice abzufragen, muss dieser erst wie unter Configuration beschrieben verändert werden.
+2. Um den aktuellen Graphen aus einem laufenden Dataservice abzufragen, muss dieser erst wie unter dem Punkt „VisITMeta configuration(Dataservice)“ beschrieben verändert werden.
 
-License
+Lizenz
 =======
-VisITMetaVisualisierungD3 is licensed under the [Apache License, Version 2.0][1].
+VisITMetaVisualisierungD3 unterliegt der [Apache License, Version 2.0][1].
 
 Sonstiges
 =======
