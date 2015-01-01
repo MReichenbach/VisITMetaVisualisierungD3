@@ -8,9 +8,9 @@
  | Data source (book resource):
  |   http://examples.oreilly.com/0636920025429/
  |
- | Extendet for:
- | IF-Map-Graph visualisation with D3 for the dataservice @Trust@HSH
- | Lecture project in 'Visualisierung und HCI' at WS14/15
+ | Extended for:
+ | IF-Map-Graph visualization with D3 for the dataservice @Trust@HSH
+ | Lecture project in 'Visualisierung und HCI', WS14/15
   -->
 <html>
 <head>
@@ -88,16 +88,16 @@
     }
 
     // Bereitet die im JSONString codierten Daten für das Anzeigen des Graphens auf.
-    // Dabei ist es egal ob der JSONString von einer Datei eingelesen wurde oder über die REST-Schnittstelle vom dataservice bezogen wurde.
+    // Dabei ist es egal ob der JSONString von einer Datei eingelesen oder über die REST-Schnittstelle vom dataservice bezogen wurde.
     //
     // Kurze Funktionsbeschreibung:
     // ----------------------------
     //
     // Es wird über sämtliche 'links' iteriert. Dabei wird geprüft ob ein Identifier schon bekannt ist,
-    // wenn ja wird er nicht als zusätzlicher Node hinzugefügt.
+    // Wenn ja wird er nicht als zusätzlicher Node hinzugefügt.
     //
-    // Metadaten werden immer hinzugefügt, zusätzlich werden dabei auch die Links zwischen Metadaten und Identifier erstellt.
-    // Sollte in einem 'links'-Objekt mehrere Metadaten vorhanden sein, so sind diese in einem zusätzlichen Array gepackt.
+    // Metadaten werden immer hinzugefügt, zusätzlich werden dabei auch die Links zwischen Metadaten und Identifiern erstellt.
+    // Sollten in einem 'links'-Objekt mehrere Metadaten vorhanden sein, so sind diese in einem zusätzlichen Array verpackt.
     // Diese Metadaten sind somit auf "gleicher Ebene", hängen also entweder am gleichen Identifier oder zwischen den gleichen.
     // Um eine bessere Darstellung zu erzielen, sodass Metadaten auf gleicher Ebene nicht mehr übereinander liegend dargestellt werden,
     // werden auch diese miteinander "unsichtbar" verlinkt.
@@ -111,7 +111,7 @@
             var dataObj = graph.data[dataArrayKey];
 
             for (var linksArrayKey in dataObj.links) {
-                var identifierKeys = []; // indexes der Identifier, wo im nodeValuesAll sie sind
+                var identifierKeys = []; // Indizes der Identifier
                 var linkObj = dataObj.links[linksArrayKey];
 
                 // ##################
@@ -147,7 +147,7 @@
                 // ########################
                 var metadata = linkObj.metadata;
                 if(metadata.constructor.name == "Array") {
-                    // Wenn es mehrere metadata unter "metadata" gibt
+                    // Wenn es mehrere metadatas unter "metadata" gibt
                     var metadataIndexKeys = []; // indexes der Metadaten, wo im nodeValuesAll sie sind
                     for (var metadataArrayKey in metadata) {
                         var meta = metadata[metadataArrayKey];
