@@ -1,4 +1,4 @@
-VisITMetaVisualisierungD3
+[VisITMetaVisualisierungD3][5]
 =========
 IF-MAP-Graphen Visualisierung mit D3, dem Dataservice aus dem Projekt [VisITMeta][3].
 Inspiriert durch das [d3-process-map][4] - Beispiel.
@@ -45,3 +45,4 @@ Getestet mit Firefox 33.1
 [2]: http://de.wikipedia.org/wiki/Cross-Origin_Resource_Sharing
 [3]: https://github.com/trustathsh/visitmeta
 [4]: https://github.com/nylen/d3-process-map
+[5]: https://github.com/MReichenbach/VisITMetaVisualisierungD3
